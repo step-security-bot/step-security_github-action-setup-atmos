@@ -1,6 +1,6 @@
 name: "setup-atmos"
 description: "A GitHub Action to setup the Atmos CLI"
-author: hello@cloudposse.com
+author: 'step-security'
 branding:
   icon: "terminal"
   color: "blue"

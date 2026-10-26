@@ -16,7 +16,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: package.json
           cache: yarn
@@ -48,23 +48,6 @@ jobs:
             exit 1
           fi
 
-      - name: Commit and push generated build artifacts
-        if: github.event_name != 'pull_request' && github.ref_type == 'branch'
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          if git diff --quiet -- dist; then
-            echo "No generated build artifact changes."
-            exit 0
-          fi
-
-          git config user.name "GitHub Action"
-          git config user.email "actions@github.com"
-          git add dist
-          git commit -m "chore: [skip-ci] generate build artifacts"
-          auth_header="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')"
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth_header}" push origin "HEAD:${GITHUB_REF_NAME}"
-
   integration:
     name: Integration (${{ matrix.os }}, ${{ matrix.version }}, wrapper=${{ matrix.install-wrapper }})
     runs-on: ${{ matrix.os }}
@@ -73,17 +56,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
-        install-wrapper:
-          - "false"
-          - "true"
+        os: ${{ github.actor == 'dependabot[bot]' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') }}
+        install-wrapper: ${{ github.actor == 'dependabot[bot]' && fromJSON('["false"]') || fromJSON('["false", "true"]') }}
         # `latest` exercises the getLatestRelease path; a pinned version exercises getReleaseByTag.
-        version:
-          - latest
-          - "1.224.1"
+        version: ${{ github.actor == 'dependabot[bot]' && fromJSON('["latest"]') || fromJSON('["latest", "1.224.1"]') }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -131,11 +107,3 @@ jobs:
             exit 1
           fi
 
-  major-release-tagger:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: cloudposse/github-action-major-release-tagger@v2
-        with:
-          dry-run: 'true'

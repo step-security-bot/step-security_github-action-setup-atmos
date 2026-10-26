@@ -1,6 +1,6 @@
 {
   "name": "github-action-setup-atmos",
-  "version": "0.0.0",
+  "version": "3.7.0",
   "private": true,
   "description": "A GitHub action to setup the atmos cli",
   "main": "dist/index.js",
@@ -17,18 +17,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cloudposse/github-action-setup-atmos"
+    "url": "git+https://github.com/step-security/github-action-setup-atmos.git"
   },
   "keywords": [
     "actions",
     "node",
     "setup"
   ],
-  "author": "Cloud Posse LLC",
+  "author": "step-security",
   "license": "Apache-2.0",
   "dependencies": {
     "@actions/core": "^1.10.1",
     "@actions/github": "^6.0.0",
+    "axios": "^1.20.0",
     "@actions/io": "^1.1.3",
     "@actions/tool-cache": "^2.0.1",
     "octokit": "^3.1.2"
@@ -45,9 +46,6 @@
     "eslint-plugin-jest": "27.9.0",
     "eslint-plugin-sort-destructure-keys": "^1.5.0",
     "jest": "29.7.0",
-    "jest-nock": "^0.2.2",
-    "ncc": "^0.3.6",
-    "nock": "^14.0.0-beta.5",
     "prettier": "3.2.5",
     "rimraf": "^5.0.5",
     "ts-jest": "29.1.2",
