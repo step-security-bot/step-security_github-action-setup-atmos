@@ -1,0 +1,114 @@
+#
+# This is the canonical configuration for the `README.md`
+# Run `make readme` to rebuild the `README.md`
+#
+
+# Name of this project
+name: github-action-setup-atmos
+
+# Tags of this project
+tags:
+  - github-action
+  - atmos
+
+# Logo for this project
+#logo: docs/logo.png
+
+# License of this project
+license: "APACHE2"
+
+# Canonical GitHub repo
+github_repo: cloudposse/github-action-setup-atmos
+
+# Badges to display
+badges:
+  - name: Latest Release
+    image: https://img.shields.io/github/release/cloudposse/github-action-setup-atmos.svg?style=for-the-badge
+    url: https://github.com/cloudposse/github-action-setup-atmos/releases/latest
+  - name: Last Updated
+    image: https://img.shields.io/github/last-commit/cloudposse/github-action-setup-atmos.svg?style=for-the-badge
+    url: https://github.com/cloudposse/github-action-setup-atmos/commits
+  - name: Slack Community
+    image: https://slack.cloudposse.com/for-the-badge.svg
+    url: https://cloudposse.com/slack
+
+# List any related terraform modules that this module may be used with or that this module depends on.
+related: []
+
+# Short description of this project
+description: Install atmos for use in GitHub Actions
+
+introduction: |-
+  This repo contains a GitHub Action to setup [atmos](https://github.com/cloudposse/atmos) for use in GitHub Actions. It
+  installs the specified version of atmos and adds it to the `PATH` so it can be used in subsequent steps. In addition,
+  it optionally installs a wrapper script that will capture the `stdout`, `stderr`, and `exitcode` of the `atmos`
+  command and make them available to subsequent steps via outputs of the same name.
+references:
+  - name: "github-actions-workflows"
+    description: "Reusable workflows for different types of projects"
+    url: "https://github.com/cloudposse/github-actions-workflows"
+  - name: "example-github-action-release-workflow"
+    description: "Example application with complicated release workflow"
+    url: "https://github.com/cloudposse/example-github-action-release-workflow"
+
+# How to use this project
+usage: |-
+  ```yaml
+  steps:
+    - uses: hashicorp/setup-terraform@v2
+
+    - name: Setup atmos
+      uses: cloudposse/github-action-setup-atmos@v2
+  ````
+
+  To install a specific version of atmos, set the `atmos-version` input:
+
+  ```yaml
+  steps:
+    - uses: hashicorp/setup-terraform@v2
+
+    - name: Setup atmos
+      uses: cloudposse/github-action-setup-atmos@v2
+      with:
+        atmos-version: 0.15.0
+  ````
+
+  The wrapper script installation can be skipped by setting the `install-wrapper` input to `false`:
+
+  ```yaml
+  steps:
+    - uses: hashicorp/setup-terraform@v2
+
+    - name: Setup atmos
+      uses: cloudposse/github-action-setup-atmos@v2
+      with:
+        install-wrapper: false
+  ````
+
+  SHA256SUMS validation defaults to `warn`, which validates when checksums are published and warns if they are missing.
+  Set `checksum-validation` to `enforce` to fail when checksums are missing, or `skip` to disable checksum validation.
+  Checksum mismatches always fail when validation runs.
+
+  Subsequent steps of the GitHub action can use the wrapper script to capture the `stdout`, `stderr`, and `exitcode` if
+  the wrapper script was installed:
+
+  ```yaml
+  steps:
+    - uses: hashicorp/setup-terraform@v2
+
+    - name: Setup atmos
+      uses: cloudposse/github-action-setup-atmos@v2
+      with:
+        install-wrapper: true
+
+    - name: Run atmos
+      id: atmos
+      run: atmos terraform plan
+
+    - run: echo ${{ steps.atmos.outputs.stdout }}
+    - run: echo ${{ steps.atmos.outputs.stderr }}
+    - run: echo ${{ steps.atmos.outputs.exitcode }}
+  ```
+
+include: []
+contributors: []
