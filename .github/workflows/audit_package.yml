@@ -18,7 +18,7 @@ on:
       script:
         description: "Build script to run"
         required: false
-        default: "yarn build"
+        default: "yarn clean && yarn build && yarn build:wrapper"
       package_manager:
         description: "Package manager to use"
         required: false
@@ -34,7 +34,7 @@ jobs:
       force: ${{ inputs.force || false }}
       base_branch: ${{ inputs.base_branch || 'main' }}
       node_version: ${{ inputs.node_version || '24' }}
-      script: ${{ inputs.script || 'yarn build' }}
+      script: ${{ inputs.script || 'yarn clean && yarn build && yarn build:wrapper' }}
       package_manager: ${{ inputs.package_manager || 'yarn' }}
 
 permissions:

@@ -65233,8 +65233,8 @@ const installWrapperBin = async (atmosDownloadPath) => {
     let source = "";
     let destination = "";
     try {
-        source = __nccwpck_require__.ab + "index1.js";
-        const orig = (0,external_fs_.readFileSync)(__nccwpck_require__.ab + "index1.js", "utf8");
+        source = external_path_.resolve([__dirname, "..", "dist", "wrapper", "index.js"].join(external_path_.sep));
+        const orig = (0,external_fs_.readFileSync)(source, "utf8");
         if (isWindows()) {
             destination = external_path_.join(atmosDownloadPath, WINDOWS_WRAPPER_NAME);
             const shimDestination = external_path_.join(atmosDownloadPath, WINDOWS_COMMAND_SHIM_NAME);
