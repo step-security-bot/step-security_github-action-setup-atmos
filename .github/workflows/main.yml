@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: yarn
+
+      - name: Install Dependencies
+        run: yarn --frozen-lockfile --prefer-offline
+
+      - name: Linting
+        run: yarn lint:check
+
+      - name: Format Source Code
+        run: yarn format:check
+
+      - name: Unit Tests
+        run: yarn test:coverage
+
+      - name: Build
+        run: |
+          yarn clean
+          yarn build
+          yarn build:wrapper
+
+      - name: Verify build artifacts are committed
+        if: github.event_name == 'pull_request'
+        run: |
+          if ! git diff --quiet -- dist; then
+            echo "::error::Generated dist artifacts are stale. Run 'yarn clean && yarn build && yarn build:wrapper' and commit dist/."
+            git diff --name-only -- dist
+            exit 1
+          fi
+
+  integration:
+    name: Integration (${{ matrix.os }}, ${{ matrix.version }}, wrapper=${{ matrix.install-wrapper }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ github.actor == 'dependabot[bot]' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') }}
+        install-wrapper: ${{ github.actor == 'dependabot[bot]' && fromJSON('["false"]') || fromJSON('["false", "true"]') }}
+        # `latest` exercises the getLatestRelease path; a pinned version exercises getReleaseByTag.
+        version: ${{ github.actor == 'dependabot[bot]' && fromJSON('["latest"]') || fromJSON('["latest", "1.224.1"]') }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Setup Atmos
+        id: setup
+        uses: ./
+        with:
+          atmos-version: ${{ matrix.version }}
+          install-wrapper: ${{ matrix.install-wrapper }}
+
+      - name: Verify resolved version
+        if: matrix.version != 'latest'
+        env:
+          RESOLVED: ${{ steps.setup.outputs.atmos-version }}
+          EXPECTED: ${{ matrix.version }}
+        shell: bash
+        run: |
+          printf 'resolved: %s (expected v%s)\n' "$RESOLVED" "$EXPECTED"
+          if [ "$RESOLVED" != "v${EXPECTED}" ]; then
+            echo "::error::setup-atmos resolved '$RESOLVED' but 'v${EXPECTED}' was requested."
+            exit 1
+          fi
+
+      - name: Run Atmos
+        id: atmos
+        run: atmos version
+
+      - name: Verify outputs are available
+        if: matrix.install-wrapper == 'true'
+        env:
+          ATMOS_STDOUT: ${{ steps.atmos.outputs.stdout }}
+          ATMOS_STDERR: ${{ steps.atmos.outputs.stderr }}
+          ATMOS_EXITCODE: ${{ steps.atmos.outputs.exitcode }}
+        shell: bash
+        run: |
+          printf 'stdout: %s\n' "$ATMOS_STDOUT"
+          printf 'stderr: %s\n' "$ATMOS_STDERR"
+          printf 'exitcode: %s\n' "$ATMOS_EXITCODE"
+          if [ -z "$ATMOS_STDOUT" ]; then
+            echo "::error::Wrapper produced no stdout output for 'atmos version' — this is the silent no-op regression."
+            exit 1
+          fi
+
